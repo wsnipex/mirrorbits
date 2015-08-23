@@ -129,7 +129,7 @@ func ReloadDownloadLogs() {
 }
 
 // This function will write a download result in the logs.
-func logDownload(typ string, statuscode int, p *Results, err error) {
+func logDownload(typ string, statuscode int, p *Results, err error, ua string) {
 	dlogger.RLock()
 	defer dlogger.RUnlock()
 
@@ -152,8 +152,8 @@ func logDownload(typ string, statuscode int, p *Results, err error) {
 			sameASNum = "same"
 		}
 
-		dlogger.l.Printf("%s %d \"%s\" ip:%s mirror:%s%s %sasn:%d distance:%skm countries:%s",
-			typ, statuscode, p.FileInfo.Path, p.IP, m.ID, fallback, sameASNum, m.Asnum, distance, countries)
+		dlogger.l.Printf("%s %d \"%s\" ip:%s mirror:%s%s %sasn:%d distance:%skm countries:%s useragent:%s",
+			typ, statuscode, p.FileInfo.Path, p.IP, m.ID, fallback, sameASNum, m.Asnum, distance, countries, ua)
 	} else if statuscode == 404 {
 		dlogger.l.Printf("%s 404 \"%s\" %s", typ, p.FileInfo.Path, p.IP)
 	} else if statuscode == 500 {
