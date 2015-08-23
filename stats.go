@@ -38,6 +38,7 @@ type Stats struct {
 	countChan chan CountItem
 	mapStats  map[string]int64
 	stop      chan bool
+	uaChan    chan UaInfo
 	wg        sync.WaitGroup
 }
 
@@ -54,6 +55,7 @@ func NewStats(redis *redisobj) *Stats {
 		countChan: make(chan CountItem, 1000),
 		mapStats:  make(map[string]int64),
 		stop:      make(chan bool),
+		uaChan:    make(chan UaInfo, 1000),
 	}
 	go s.processCountDownload()
 	return s
@@ -66,7 +68,7 @@ func (s *Stats) Terminate() {
 }
 
 // Lightweight method used to count a new download for a specific file and mirror
-func (s *Stats) CountDownload(m Mirror, fileinfo FileInfo) error {
+func (s *Stats) CountDownload(m Mirror, fileinfo FileInfo, uaInfo UaInfo) error {
 	if m.ID == "" {
 		return unknownMirror
 	}
@@ -75,6 +77,7 @@ func (s *Stats) CountDownload(m Mirror, fileinfo FileInfo) error {
 	}
 
 	s.countChan <- CountItem{m.ID, fileinfo.Path, fileinfo.Size, time.Now()}
+	s.uaChan <- uaInfo
 	return nil
 }
 
@@ -94,6 +97,11 @@ func (s *Stats) processCountDownload() {
 			s.mapStats["f"+date+c.filepath] += 1
 			s.mapStats["m"+date+c.mirrorID] += 1
 			s.mapStats["s"+date+c.mirrorID] += c.size
+		case c := <-s.uaChan:
+			date := time.Now().Format("2006_01_02|") // Includes separator
+			s.mapStats["p"+date+c.Platform] += 1
+			s.mapStats["o"+date+c.OS] += 1
+			s.mapStats["b"+date+c.Browser] += 1
 		case <-pushTicker.C:
 			s.pushStats()
 		}
@@ -152,6 +160,30 @@ func (s *Stats) pushStats() {
 
 			for i := 0; i < 4; i++ {
 				rconn.Send("HINCRBY", mkey, object, v)
+				mkey = mkey[:strings.LastIndex(mkey, "_")]
+			}
+		} else if typ == "p" {
+			// Platform
+
+			mkey := fmt.Sprintf("STATS_USERAGENT_platform_%s", date)
+			for i := 0; i < 4; i++ {
+				rconn.Send("ZINCRBY", mkey, v, object)
+				mkey = mkey[:strings.LastIndex(mkey, "_")]
+			}
+		} else if typ == "o" {
+			// OS
+
+			mkey := fmt.Sprintf("STATS_USERAGENT_os_%s", date)
+			for i := 0; i < 4; i++ {
+				rconn.Send("ZINCRBY", mkey, v, object)
+				mkey = mkey[:strings.LastIndex(mkey, "_")]
+			}
+		} else if typ == "b" {
+			// Browser
+
+			mkey := fmt.Sprintf("STATS_USERAGENT_browser_%s", date)
+			for i := 0; i < 4; i++ {
+				rconn.Send("ZINCRBY", mkey, v, object)
 				mkey = mkey[:strings.LastIndex(mkey, "_")]
 			}
 		} else {
