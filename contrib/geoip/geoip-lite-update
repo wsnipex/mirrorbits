@@ -78,13 +78,5 @@ if [ "$1" = "--no-reload" ]; then
 	exit 0
 fi
 
-if [ -x /etc/init.d/apache2 ]; then
-	/etc/init.d/apache2 reload
-elif [ -x /etc/init.d/httpd ]; then
-	/etc/init.d/httpd reload
-elif [ -x /usr/bin/systemctl ]; then
-	/usr/bin/systemctl reload httpd >/dev/null 2>&1 || :
-elif [ -x /bin/systemctl ]; then
-	/bin/systemctl reload httpd >/dev/null 2>&1 || :
-fi
-
+# reload GeoIP in mirrorbits
+kill -HUP $(pidof mirrorbits)

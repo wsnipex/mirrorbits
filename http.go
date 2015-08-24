@@ -137,6 +137,16 @@ func (h *HTTP) Reload() {
 	} else {
 		log.Error("could not reload templates 'mirrorstats': %s", err.Error())
 	}
+	if err := h.geoip.LoadGeoIP(); err != nil {
+		log.Critical("Can't load the GeoIP databases: %v", err)
+		if len(GetConfig().Fallbacks) > 0 {
+			log.Warning("All requests will be served by the backup mirrors!")
+		} else {
+			log.Error("Please configure fallback mirrors!")
+		}
+	} else {
+		log.Error("Reloaded GeoIP")
+	}
 }
 
 // RunServer is the main function used to start the HTTP server
