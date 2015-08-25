@@ -39,9 +39,10 @@ type HTTP struct {
 
 // Templates is a struct embedding instances of the precompiled templates
 type Templates struct {
-	mirrorlist    *template.Template
-	mirrorstats   *template.Template
-	downloadstats *template.Template
+	mirrorlist     *template.Template
+	mirrorstats    *template.Template
+	downloadstats  *template.Template
+	useragentstats *template.Template
 }
 
 // FileInfo is a struct embedding details about a file served by
@@ -82,6 +83,7 @@ func HTTPServer(redis *redisobj, cache *Cache) *HTTP {
 	h.templates.mirrorlist = template.Must(h.LoadTemplates("mirrorlist"))
 	h.templates.mirrorstats = template.Must(h.LoadTemplates("mirrorstats"))
 	h.templates.downloadstats = template.Must(h.LoadTemplates("downloadstats"))
+	h.templates.useragentstats = template.Must(h.LoadTemplates("useragentstats"))
 	h.cache = cache
 	h.stats = NewStats(redis)
 	h.engine = DefaultEngine{}
@@ -151,6 +153,11 @@ func (h *HTTP) Reload() {
 	} else {
 		log.Error("could not reload templates 'downloadstats': %s", err.Error())
 	}
+	if t, err := h.LoadTemplates("useragentstats"); err == nil {
+		h.templates.useragentstats = t //XXX lock needed?
+	} else {
+		log.Error("could not reload templates 'useragentstats': %s", err.Error())
+	}
 }
 
 // RunServer is the main function used to start the HTTP server
@@ -207,6 +214,8 @@ func (h *HTTP) requestDispatcher(w http.ResponseWriter, r *http.Request) {
 		h.fileStatsHandler(w, r, ctx)
 	case DOWNLOADSTATS:
 		h.downloadStatsHandler(w, r, ctx)
+	case USERAGENTSTATS:
+		h.userAgentStatsHandler(w, r, ctx)
 	case CHECKSUM:
 		h.checksumHandler(w, r, ctx)
 	}
@@ -560,6 +569,127 @@ func (h *HTTP) downloadStatsHandler(w http.ResponseWriter, r *http.Request, ctx 
 		w.Write(output)
 	}
 	log.Debug("downloadStatsHandler: output took %v", time.Now().Sub(t4))
+
+}
+
+type UserAgentStats struct {
+	Name      string
+	Downloads int64
+}
+
+type UserAgentStatsPage struct {
+	List   []*UserAgentStats
+	Type   string
+	Period string
+	Limit  int
+	Month  string
+	Today  string
+	Path   string
+}
+
+func (h *HTTP) userAgentStatsHandler(w http.ResponseWriter, r *http.Request, ctx *Context) {
+	var results []*UserAgentStats
+	var output []byte
+	var filter string
+	var period string
+
+	// parse query params
+	req := strings.SplitN(ctx.QueryParam("useragentstats"), "-", 3)
+	if req[0] != "" {
+		for _, e := range req {
+			if _, err := strconv.ParseInt(e, 10, 0); err != nil {
+				http.Error(w, "Invalid period", http.StatusBadRequest)
+				return
+			}
+		}
+		period = strings.Replace(ctx.QueryParam("useragentstats"), "-", "_", 3)
+	}
+
+	item := "os"
+	if len(ctx.QueryParam("type")) >= 1 {
+		item = ctx.QueryParam("type")
+	}
+
+	format := "text"
+	if ctx.QueryParam("format") == "json" {
+		format = "json"
+	}
+
+	haveFilter := false
+	if len(ctx.QueryParam("filter")) >= 1 {
+		haveFilter = true
+		filter = strings.Trim(ctx.QueryParam("filter"), " !#&%$*+'")
+	}
+
+	limit := 100
+	if ctx.QueryParam("limit") != "" {
+		l, err := strconv.ParseInt(ctx.QueryParam("limit"), 0, 0)
+		if err != nil || l < 0 {
+			http.Error(w, "Invalid limit", http.StatusBadRequest)
+			return
+		}
+		limit = int(l)
+	}
+
+	t0 := time.Now()
+	rconn := h.redis.pool.Get()
+	defer rconn.Close()
+
+	// get stats array from redis
+	var dkey string
+	if len(period) >= 4 {
+		dkey = fmt.Sprintf("STATS_USERAGENT_%s_%s", item, period)
+	} else {
+		dkey = fmt.Sprintf("STATS_USERAGENT_%s", item)
+	}
+	v, err := redis.Strings(rconn.Do("ZREVRANGE", dkey, "0", limit-1, "withscores"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// generatate results
+	for i := 0; i < len(v); i = i + 2 {
+		dls, _ := strconv.ParseInt(v[i+1], 10, 64)
+		if haveFilter {
+			if strings.Contains(v[i], filter) {
+				s := &UserAgentStats{Downloads: dls, Name: v[i]}
+				results = append(results, s)
+			}
+		} else {
+			s := &UserAgentStats{Downloads: dls, Name: v[i]}
+			results = append(results, s)
+		}
+	}
+
+	log.Debug("Stats generation took %v", time.Now().Sub(t0))
+	t1 := time.Now()
+
+	// output
+	if format == "text" {
+		if len(period) < 4 {
+			period = "All time"
+		}
+		today := time.Now().Format("2006-01-02")
+		month := time.Now().Format("2006-01")
+
+		err = ctx.Templates().useragentstats.ExecuteTemplate(ctx.ResponseWriter(), "base",
+			UserAgentStatsPage{results, item, period, limit, month, today, GetConfig().DownloadStatsPath})
+		if err != nil {
+			log.Error("Error rendering useragentstats: %s", err.Error())
+			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+			return
+		}
+	} else {
+		output, err = json.MarshalIndent(results, "", "    ")
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+			return
+		}
+		ctx.ResponseWriter().Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Write(output)
+	}
+	log.Debug("userAgentStatsHandler: output took %v", time.Now().Sub(t1))
 
 }
 
