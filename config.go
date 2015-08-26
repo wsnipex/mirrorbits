@@ -36,6 +36,11 @@ var (
 		DisallowRedirects:       false,
 		WeightDistributionRange: 1.5,
 		DisableOnMissingFile:    false,
+		UserAgentStatsConf: uaconf{
+			LogUnknown:          false,
+			BrowsersWithVersion: []string{},
+			CheckEngines:        []string{"Android", "Windows"},
+		},
 	}
 	config      *configuration
 	configMutex sync.RWMutex
@@ -61,6 +66,7 @@ type configuration struct {
 	DisableOnMissingFile    bool       `yaml:"DisableOnMissingFile"`
 	Fallbacks               []fallback `yaml:"Fallbacks"`
 	DownloadStatsPath       string     `yaml:"DownloadStatsPath"`
+	UserAgentStatsConf      uaconf     `yaml:"UserAgentStatsConf"`
 
 	RedisSentinelMasterName string      `yaml:"RedisSentinelMasterName"`
 	RedisSentinels          []sentinels `yaml:"RedisSentinels"`
@@ -80,6 +86,12 @@ type hashing struct {
 	SHA1   bool `yaml:"SHA1"`
 	SHA256 bool `yaml:"SHA256"`
 	MD5    bool `yaml:"MD5"`
+}
+
+type uaconf struct {
+	LogUnknown          bool     `yaml:"LogUnknown"`
+	BrowsersWithVersion []string `yaml:"BrowsersWithVersion"`
+	CheckEngines        []string `yaml:"CheckEngines"`
 }
 
 // LoadConfig loads the configuration file if it has not yet been loaded
