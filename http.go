@@ -35,6 +35,7 @@ type HTTP struct {
 	Restarting     bool
 	stopped        bool
 	stoppedMutex   sync.Mutex
+	blockedUAs     []string
 }
 
 // Templates is a struct embedding instances of the precompiled templates
@@ -87,6 +88,7 @@ func HTTPServer(redis *redisobj, cache *Cache) *HTTP {
 	h.cache = cache
 	h.stats = NewStats(redis)
 	h.engine = DefaultEngine{}
+	h.blockedUAs = GetConfig().UserAgentStatsConf.BlockedUserAgents
 	http.Handle("/", NewGzipHandler(h.requestDispatcher))
 
 	// Load the GeoIP database
@@ -248,6 +250,17 @@ func (h *HTTP) mirrorHandler(w http.ResponseWriter, r *http.Request, ctx *Contex
 
 	// parse user agent
 	ua := NewUserAgent(r.UserAgent())
+
+	// Useragent blocked?
+	if len(h.blockedUAs) > 0 {
+		for _, b := range h.blockedUAs {
+			if strings.Trim(ua.Browser, " ") == b {
+				http.NotFound(w, r)
+				return
+			}
+		}
+	}
+
 	clientUA := UaInfo{
 		Platform: strings.Trim(ua.Platform, " "),
 		OS:       strings.Trim(ua.OS+" "+ua.OSVer, " "),
