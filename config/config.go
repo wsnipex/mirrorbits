@@ -42,10 +42,12 @@ var (
 		WeightDistributionRange: 1.5,
 		DisableOnMissingFile:    false,
 		UserAgentStatsConf: uaconf{
-			LogUnknown:          false,
-			BrowsersWithVersion: []string{},
-			CheckEngines:        []string{},
-			BlockedUserAgents:   []string{},
+			LogUnknown:           false,
+			CountOnlySpecialPath: false,
+			BrowsersWithVersion:  []string{},
+			CheckEngines:         []string{},
+			BlockedUserAgents:    []string{},
+			CountSpecialPath:     "",
 		},
 	}
 	config      *configuration
@@ -99,10 +101,12 @@ type hashing struct {
 }
 
 type uaconf struct {
-	LogUnknown          bool     `yaml:"LogUnknown"`
-	BrowsersWithVersion []string `yaml:"BrowsersWithVersion"`
-	CheckEngines        []string `yaml:"CheckEngines"`
-	BlockedUserAgents   []string `yaml:"BlockedUserAgents"`
+	LogUnknown           bool     `yaml:"LogUnknown"`
+	CountOnlySpecialPath bool     `yaml:"CountOnlySpecialPath"`
+	BrowsersWithVersion  []string `yaml:"BrowsersWithVersion"`
+	CheckEngines         []string `yaml:"CheckEngines"`
+	BlockedUserAgents    []string `yaml:"BlockedUserAgents"`
+	CountSpecialPath     string   `yaml:"CountSpecialPath"`
 }
 
 // LoadConfig loads the configuration file if it has not yet been loaded
