@@ -36,6 +36,9 @@ type HTTP struct {
 	stopped        bool
 	stoppedMutex   sync.Mutex
 	blockedUAs     []string
+	uACountOnlyS   bool
+	uACountSpecial string
+	parseUA        bool
 }
 
 // Templates is a struct embedding instances of the precompiled templates
@@ -62,6 +65,7 @@ type UaInfo struct {
 	Platform string `redis:"platform" json:",omitempty"`
 	OS       string `redis:"os" json:",omitempty"`
 	Browser  string `redis:"browser" json:",omitempty"`
+	Special  bool
 }
 
 // Results is the resulting struct of a request and is
@@ -89,6 +93,9 @@ func HTTPServer(redis *redisobj, cache *Cache) *HTTP {
 	h.stats = NewStats(redis)
 	h.engine = DefaultEngine{}
 	h.blockedUAs = GetConfig().UserAgentStatsConf.BlockedUserAgents
+	h.uACountOnlyS = GetConfig().UserAgentStatsConf.CountOnlySpecialPath
+	h.uACountSpecial = GetConfig().UserAgentStatsConf.CountSpecialPath
+	h.parseUA = h.uACountOnlyS == false || len(h.blockedUAs) > 0
 	http.Handle("/", NewGzipHandler(h.requestDispatcher))
 
 	// Load the GeoIP database
@@ -249,22 +256,78 @@ func (h *HTTP) mirrorHandler(w http.ResponseWriter, r *http.Request, ctx *Contex
 	}
 
 	// parse user agent
-	ua := NewUserAgent(r.UserAgent())
+	uACountSpecial := false
+	clientUA := UaInfo{}
 
-	// Useragent blocked?
-	if len(h.blockedUAs) > 0 {
-		for _, b := range h.blockedUAs {
-			if strings.Trim(ua.Browser, " ") == b {
-				http.NotFound(w, r)
-				return
+	if h.parseUA {
+		ua := NewUserAgent(r.UserAgent())
+
+		// Useragent blocked?
+		if len(h.blockedUAs) > 0 {
+			for _, b := range h.blockedUAs {
+				if strings.Trim(ua.Browser, " ") == b {
+					http.NotFound(w, r)
+					return
+				}
 			}
 		}
-	}
 
-	clientUA := UaInfo{
-		Platform: strings.Trim(ua.Platform, " "),
-		OS:       strings.Trim(ua.OS+" "+ua.OSVer, " "),
-		Browser:  strings.Trim(ua.Browser, " "),
+		clientUA = UaInfo{
+			Platform: strings.Trim(ua.Platform, " "),
+			OS:       strings.Trim(ua.OS+" "+ua.OSVer, " "),
+			Browser:  strings.Trim(ua.Browser, " "),
+			Special:  uACountSpecial,
+		}
+	}
+	if h.uACountOnlyS || len(h.uACountSpecial) > 0 {
+		//for _, f := range h.uACountSpecial {
+		if strings.Contains(r.URL.Path, h.uACountSpecial) {
+			uACountSpecial = true
+			ua2 := NewUserAgent(r.UserAgent())
+			for _, b := range GetConfig().UserAgentStatsConf.BrowsersWithVersion {
+				if strings.Contains(ua2.Browser, b) {
+					clientUA = UaInfo{
+						Platform: strings.Trim(ua2.Platform, " "),
+						OS:       strings.Trim(ua2.OS+" "+ua2.OSVer, " "),
+						Browser:  strings.Trim(ua2.Browser, " "),
+						Special:  uACountSpecial,
+					}
+
+					// check if our special file has a newer version
+					rconn := h.redis.pool.Get()
+					defer rconn.Close()
+
+					sp, err := redis.String(rconn.Do("GET", "special_file_path"))
+					if err != nil {
+						log.Debug("error in redis: %s", err)
+					}
+					if sp < r.URL.Path {
+						newfile := fmt.Sprintf("special_file_path_%s", time.Now().Format("2006_01_02"))
+						rconn.Send("MULTI")
+						rconn.Send("RENAME", "special_file_path", newfile)
+						rconn.Send("SET", "special_file_path", r.URL.Path)
+
+						for _, key := range []string{"platform", "os", "browser"} {
+							mkey := fmt.Sprintf("STATS_SPECIAL_%s_%s", key, time.Now().Format("2006_01_02"))
+							for i := 0; i < 2; i++ {
+								rconn.Send("DEL", mkey)
+								mkey = mkey[:strings.LastIndex(mkey, "_")]
+							}
+						}
+						_, err := rconn.Do("EXEC")
+						if err != nil {
+							log.Debug("error in redis: %s", err)
+						} else {
+							log.Info("CountSpecialPath changed to %s", r.URL.Path)
+						}
+					} else if sp > r.URL.Path {
+						clientUA = UaInfo{}
+					}
+					break
+				}
+			}
+		}
+		//}
 	}
 
 	clientInfo := h.geoip.GetInfos(remoteIP) //TODO return a pointer?
@@ -644,6 +707,11 @@ func (h *HTTP) userAgentStatsHandler(w http.ResponseWriter, r *http.Request, ctx
 		limit = int(l)
 	}
 
+	name := "USERAGENT"
+	if len(ctx.QueryParam("special")) > 0 {
+		name = "SPECIAL"
+	}
+
 	t0 := time.Now()
 	rconn := h.redis.pool.Get()
 	defer rconn.Close()
@@ -651,9 +719,9 @@ func (h *HTTP) userAgentStatsHandler(w http.ResponseWriter, r *http.Request, ctx
 	// get stats array from redis
 	var dkey string
 	if len(period) >= 4 {
-		dkey = fmt.Sprintf("STATS_USERAGENT_%s_%s", item, period)
+		dkey = fmt.Sprintf("STATS_%s_%s_%s", name, item, period)
 	} else {
-		dkey = fmt.Sprintf("STATS_USERAGENT_%s", item)
+		dkey = fmt.Sprintf("STATS_%s_%s", name, item)
 	}
 	v, err := redis.Strings(rconn.Do("ZREVRANGE", dkey, "0", limit-1, "withscores"))
 	if err != nil {
