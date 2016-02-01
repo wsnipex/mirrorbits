@@ -22,6 +22,7 @@ var (
 		RedisAddress:           "127.0.0.1:6379",
 		RedisPassword:          "",
 		LogDir:                 "",
+		LogLevel:               "ERROR",
 		GeoipDatabasePath:      "/usr/share/GeoIP/",
 		DownloadStatsPath:      "",
 		ConcurrentSync:         2,
@@ -58,6 +59,7 @@ type configuration struct {
 	RedisAddress            string     `yaml:"RedisAddress"`
 	RedisPassword           string     `yaml:"RedisPassword"`
 	LogDir                  string     `yaml:"LogDir"`
+	LogLevel                string     `yaml:"LogLevel"`
 	GeoipDatabasePath       string     `yaml:"GeoipDatabasePath"`
 	ConcurrentSync          int        `yaml:"ConcurrentSync"`
 	ScanInterval            int        `yaml:"ScanInterval"`

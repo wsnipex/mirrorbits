@@ -17,9 +17,18 @@ import (
 )
 
 var (
-	log     = logging.MustGetLogger("main")
-	rlogger RuntimeLogger
-	dlogger DownloadsLogger
+	log          = logging.MustGetLogger("main")
+	rlogger      RuntimeLogger
+	dlogger      DownloadsLogger
+	loglevel     logging.Level
+	nameToLevels = map[string]logging.Level{
+		"CRITICAL": logging.CRITICAL,
+		"ERROR":    logging.ERROR,
+		"WARNING":  logging.WARNING,
+		"NOTICE":   logging.NOTICE,
+		"INFO":     logging.INFO,
+		"DEBUG":    logging.DEBUG,
+	}
 )
 
 type RuntimeLogger struct {
@@ -47,6 +56,7 @@ func ReloadRuntimeLogs() {
 		return
 	}
 
+	loglevel = nameToLevels[GetConfig().LogLevel]
 	logColor := false
 
 	stat, _ := os.Stdout.Stat()
@@ -81,7 +91,7 @@ func ReloadRuntimeLogs() {
 		logging.SetLevel(logging.DEBUG, "main")
 	} else {
 		logging.SetFormatter(logging.MustStringFormatter("%{time:2006/01/02 15:04:05.000 MST} %{message}"))
-		logging.SetLevel(logging.INFO, "main")
+		logging.SetLevel(loglevel, "main")
 	}
 }
 
