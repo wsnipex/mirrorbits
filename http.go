@@ -353,9 +353,11 @@ func (h *HTTP) mirrorHandler(w http.ResponseWriter, r *http.Request, ctx *Contex
 		} else {
 			// No fallback in stock, there's nothing else we can do
 			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+			log.Error("code: %d, file: %s, client: %s, mirrors: %s, useragent: %s", http.StatusServiceUnavailable, r.URL.Path, remoteIP, mirrors, r.UserAgent())
 		}
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error("error: %s, file: %s, client: %s, mirrors: %s, useragent: %s", err.Error(), r.URL.Path, remoteIP, mirrors, r.UserAgent())
 		return
 	}
 
