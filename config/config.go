@@ -27,6 +27,7 @@ var (
 		RedisPassword:          "",
 		RedisDB:                0,
 		LogDir:                 "",
+		LogLevel:               "INFO",
 		GeoipDatabasePath:      "/usr/share/GeoIP/",
 		DownloadStatsPath:      "",
 		ConcurrentSync:         2,
@@ -67,6 +68,7 @@ type configuration struct {
 	RedisPassword           string     `yaml:"RedisPassword"`
 	RedisDB                 int        `yaml:"RedisDB"`
 	LogDir                  string     `yaml:"LogDir"`
+	LogLevel                string     `yaml:"LogLevel"`
 	GeoipDatabasePath       string     `yaml:"GeoipDatabasePath"`
 	ConcurrentSync          int        `yaml:"ConcurrentSync"`
 	ScanInterval            int        `yaml:"ScanInterval"`
@@ -190,6 +192,13 @@ func GetConfig() *configuration {
 	}
 
 	return config
+}
+
+func SafeGetConfig() *configuration {
+	defer func() {
+		if err := recover(); err != nil {}
+	}()
+	return GetConfig()
 }
 
 func SubscribeConfig(subscriber chan bool) {
