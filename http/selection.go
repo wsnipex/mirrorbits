@@ -4,11 +4,11 @@
 package http
 
 import (
-	. "github.com/etix/mirrorbits/config"
-	"github.com/etix/mirrorbits/filesystem"
-	"github.com/etix/mirrorbits/mirrors"
-	"github.com/etix/mirrorbits/network"
-	"github.com/etix/mirrorbits/utils"
+	. "github.com/wsnipex/mirrorbits/config"
+	"github.com/wsnipex/mirrorbits/filesystem"
+	"github.com/wsnipex/mirrorbits/mirrors"
+	"github.com/wsnipex/mirrorbits/network"
+	"github.com/wsnipex/mirrorbits/utils"
 	"math"
 	"math/rand"
 	"sort"

@@ -6,8 +6,8 @@ package database
 import (
 	"errors"
 	"fmt"
-	. "github.com/etix/mirrorbits/config"
-	"github.com/etix/mirrorbits/core"
+	. "github.com/wsnipex/mirrorbits/config"
+	"github.com/wsnipex/mirrorbits/core"
 	"github.com/garyburd/redigo/redis"
 	"strconv"
 	"strings"

@@ -5,7 +5,7 @@ package utils
 
 import (
 	"github.com/etix/geoip"
-	"github.com/etix/mirrorbits/network"
+	"github.com/wsnipex/mirrorbits/network"
 	"strings"
 	"testing"
 	"time"

@@ -9,7 +9,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
-	. "github.com/etix/mirrorbits/config"
+	. "github.com/wsnipex/mirrorbits/config"
 	"io"
 	"os"
 )

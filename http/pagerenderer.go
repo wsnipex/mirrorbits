@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/etix/mirrorbits/mirrors"
+	"github.com/wsnipex/mirrorbits/mirrors"
 	"net/http"
 	"sort"
 	"strconv"

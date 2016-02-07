@@ -5,9 +5,9 @@ package daemon
 
 import (
 	"fmt"
-	"github.com/etix/mirrorbits/database"
-	"github.com/etix/mirrorbits/mirrors"
-	"github.com/etix/mirrorbits/utils"
+	"github.com/wsnipex/mirrorbits/database"
+	"github.com/wsnipex/mirrorbits/mirrors"
+	"github.com/wsnipex/mirrorbits/utils"
 	"math/rand"
 	"sort"
 	"strings"

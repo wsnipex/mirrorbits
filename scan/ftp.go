@@ -5,7 +5,7 @@ package scan
 
 import (
 	"fmt"
-	"github.com/etix/mirrorbits/utils"
+	"github.com/wsnipex/mirrorbits/utils"
 	"github.com/garyburd/redigo/redis"
 	"github.com/jlaffaye/ftp"
 	"net/url"

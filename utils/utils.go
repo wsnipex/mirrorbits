@@ -5,8 +5,8 @@ package utils
 
 import (
 	"fmt"
-	"github.com/etix/mirrorbits/core"
-	"github.com/etix/mirrorbits/network"
+	"github.com/wsnipex/mirrorbits/core"
+	"github.com/wsnipex/mirrorbits/network"
 	"math"
 	"os"
 	"sort"
@@ -210,4 +210,3 @@ func (s Int64Slice) Sort() {
 func (s Int64Slice) Reverse() {
 	sort.Sort(sort.Reverse(s))
 }
-

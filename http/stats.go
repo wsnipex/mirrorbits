@@ -6,9 +6,9 @@ package http
 import (
 	"errors"
 	"fmt"
-	"github.com/etix/mirrorbits/database"
-	"github.com/etix/mirrorbits/filesystem"
-	"github.com/etix/mirrorbits/mirrors"
+	"github.com/wsnipex/mirrorbits/database"
+	"github.com/wsnipex/mirrorbits/filesystem"
+	"github.com/wsnipex/mirrorbits/mirrors"
 	"github.com/wsnipex/mirrorbits/useragent"
 	"strings"
 	"sync"

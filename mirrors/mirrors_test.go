@@ -6,9 +6,9 @@ package mirrors
 import (
 	"fmt"
 	"github.com/etix/geoip"
-	"github.com/etix/mirrorbits/database"
-	"github.com/etix/mirrorbits/network"
-	. "github.com/etix/mirrorbits/testing"
+	"github.com/wsnipex/mirrorbits/database"
+	"github.com/wsnipex/mirrorbits/network"
+	. "github.com/wsnipex/mirrorbits/testing"
 	"github.com/garyburd/redigo/redis"
 	"github.com/rafaeljusto/redigomock"
 	"math/rand"

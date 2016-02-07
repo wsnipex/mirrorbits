@@ -6,7 +6,7 @@ package process
 import (
 	"errors"
 	"fmt"
-	"github.com/etix/mirrorbits/core"
+	"github.com/wsnipex/mirrorbits/core"
 	"github.com/op/go-logging"
 	"io/ioutil"
 	"net"

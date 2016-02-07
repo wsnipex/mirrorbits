@@ -5,10 +5,10 @@ package mirrors
 
 import (
 	"fmt"
-	"github.com/etix/mirrorbits/database"
-	"github.com/etix/mirrorbits/filesystem"
-	"github.com/etix/mirrorbits/network"
-	"github.com/etix/mirrorbits/utils"
+	"github.com/wsnipex/mirrorbits/database"
+	"github.com/wsnipex/mirrorbits/filesystem"
+	"github.com/wsnipex/mirrorbits/network"
+	"github.com/wsnipex/mirrorbits/utils"
 	"github.com/garyburd/redigo/redis"
 	"strconv"
 	"strings"

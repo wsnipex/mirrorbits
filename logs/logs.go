@@ -6,10 +6,10 @@ package logs
 import (
 	"bytes"
 	"fmt"
-	. "github.com/etix/mirrorbits/config"
-	"github.com/etix/mirrorbits/core"
-	"github.com/etix/mirrorbits/mirrors"
 	"github.com/op/go-logging"
+	. "github.com/wsnipex/mirrorbits/config"
+	"github.com/wsnipex/mirrorbits/core"
+	"github.com/wsnipex/mirrorbits/mirrors"
 	"io"
 	stdlog "log"
 	"os"
@@ -22,8 +22,8 @@ import (
 
 var (
 	log          = logging.MustGetLogger("main")
-	rlogger      RuntimeLogger
-	dlogger      DownloadsLogger
+	rlogger      runtimeLogger
+	dlogger      downloadsLogger
 	loglevel     logging.Level
 	nameToLevels = map[string]logging.Level{
 		"CRITICAL": logging.CRITICAL,

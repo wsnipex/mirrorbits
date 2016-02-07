@@ -7,7 +7,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/etix/mirrorbits/utils"
+	"github.com/wsnipex/mirrorbits/utils"
 	"github.com/garyburd/redigo/redis"
 	"io"
 	"os"

@@ -5,8 +5,8 @@ package config
 
 import (
 	"fmt"
-	"github.com/etix/mirrorbits/core"
 	"github.com/op/go-logging"
+	"github.com/wsnipex/mirrorbits/core"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"

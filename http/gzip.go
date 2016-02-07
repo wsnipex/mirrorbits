@@ -4,8 +4,8 @@
 package http
 
 import (
-	. "github.com/etix/mirrorbits/config"
-	"github.com/etix/mirrorbits/http/cgzip"
+	. "github.com/wsnipex/mirrorbits/config"
+	"github.com/wsnipex/mirrorbits/http/cgzip"
 	"io"
 	"net/http"
 	"strings"
