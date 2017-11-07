@@ -9,7 +9,7 @@
 <thead><tr><th>Filename</th><th>Downloads</th></tr></thead>
 <tbody>
 {{range $v := .List}}
-<tr><td>{{$v.Filename}}</td><td>{{$v.Downloads}}</td></tr>
+<tr><td>{{$v.Filename}}</td><td style="font-family: monospace; text-align: right;">{{$v.Downloads}}</td></tr>
 {{end}}
 </tbody>
 </table>
